@@ -3,6 +3,7 @@ import { ToolRequestDto, ToolResponseDto, ToolInitialState } from './types'
 import { PayloadAction } from '@reduxjs/toolkit'
 
 const toolDataInitialState: ToolInitialState = {
+  images: [],
   userTools: [],
   initialTools: [],
   tools: [],
@@ -43,11 +44,8 @@ export const toolSlice = createAppSlice({
           state.error = undefined
         },
         fulfilled: (state: ToolInitialState, action) => {
+          state.images = action.payload
           state.isLoading = false
-          state.toolObj = {
-            ...state.toolObj,
-            imageUrls: action.payload,
-          }
           state.error = undefined
         },
         rejected: (state: ToolInitialState, action) => {
@@ -81,10 +79,8 @@ export const toolSlice = createAppSlice({
           state.isLoading = true
         },
         fulfilled: (state: ToolInitialState, action) => {
-          state.isLoading = false
           state.toolObj = action.payload
-          state.tools.push(action.payload)
-          state.initialTools.push(action.payload)
+          state.isLoading = false
           state.error = undefined
         },
         rejected: (state: ToolInitialState, action) => {
@@ -230,6 +226,7 @@ export const toolSlice = createAppSlice({
   }),
   selectors: {
     tools_data: (state: ToolInitialState) => ({
+      images: state.images,
       tools: state.tools,
       isLoading: state.isLoading,
       error: state.error,

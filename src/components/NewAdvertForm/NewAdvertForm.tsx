@@ -29,7 +29,9 @@ function NewAdvertForm() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const { isLoading, error } = useAppSelector(toolSliceSelectors.tools_data)
+  const { isLoading, images, error } = useAppSelector(
+    toolSliceSelectors.tools_data,
+  )
 
   const addImageTool = async (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -37,13 +39,7 @@ function NewAdvertForm() {
       try {
         const resultAction = await dispatch(toolSliceAction.uploadImage(files))
         if (toolSliceAction.uploadImage.fulfilled.match(resultAction)) {
-          const imageUrls = resultAction.payload
-          console.log(resultAction.payload)
-
-          formik.setFieldValue(NEWADVERT_FORM_NAMES.IMAGE_URLS, [
-            ...(formik.values.imageUrls || []),
-            ...imageUrls,
-          ])
+          console.log('Uploaded URLs:', resultAction.payload)
         }
       } catch (error) {
         console.error('Failed to upload images:', error)
@@ -65,9 +61,9 @@ function NewAdvertForm() {
       .required('Description is required field')
       .min(5, 'The min description length is 5 characters')
       .max(2000, 'The max description length is 2000 characters'),
-    [NEWADVERT_FORM_NAMES.IMAGE_URLS]: Yup.array()
-      .of(Yup.string().url('Image must be a valid URL'))
-      .notRequired(),
+    // [NEWADVERT_FORM_NAMES.IMAGE_URLS]: Yup.array()
+    //   .of(Yup.string().url('Image must be a valid URL'))
+    //   .notRequired(),
   })
 
   const formik = useFormik<ToolRequestDto>({
@@ -75,36 +71,24 @@ function NewAdvertForm() {
       [NEWADVERT_FORM_NAMES.TITLE]: '',
       [NEWADVERT_FORM_NAMES.DESCRIPTION]: '',
       [NEWADVERT_FORM_NAMES.STATUS]: 'AVAILABLE',
-      [NEWADVERT_FORM_NAMES.IMAGE_URLS]: [],
+      // [NEWADVERT_FORM_NAMES.IMAGE_URLS]: [],
       [NEWADVERT_FORM_NAMES.PRICE]: '',
     },
     validationSchema: validationSchema,
     validateOnChange: false,
     onSubmit: async (values, helpers) => {
-      try {
-        const result = await dispatch(toolSliceAction.createTool({
-          title: values.title,
-          description: values.description,
-          status: values.status,
-          price: values.price,
-          imageUrls:
-            values.imageUrls && values.imageUrls.length > 0
-              ? values.imageUrls
-              : [],
-        }));
-        
-        if (toolSliceAction.createTool.fulfilled.match(result)) {
-          helpers.resetForm();
-          navigate(TOOLS_APP_ROUTES.MY_ADVERTS);
-          window.location.reload();
-        } else {
-          console.error('Failed to create advert:', result.error);
-        }
-      } catch (error) {
-        console.error('Submit error:', error);
-      }
-    }
-    
+      // Диспетчеризуем createTool
+      dispatch(toolSliceAction.createTool({ ...values, imageUrls: images }))
+        .unwrap()
+        .then(() => {
+          console.log('Tool created successfully')
+          helpers.resetForm() // Сбрасываем форму
+          navigate(TOOLS_APP_ROUTES.MY_ADVERTS) // Перенаправляем
+        })
+        .catch(error => {
+          console.error('Failed to create tool:', error)
+        })
+    },
   })
 
   return (
@@ -140,9 +124,9 @@ function NewAdvertForm() {
         />
       </InputsContainer>
       <ButtonControl>
-        {formik.values.imageUrls && formik.values.imageUrls.length > 0 && (
+        {images && images.length > 0 && (
           <>
-            {formik.values.imageUrls.map((url, index) => (
+            {images.map((url, index) => (
               <div key={url}>
                 <img
                   id={`image-preview-${index}`}
@@ -170,7 +154,7 @@ function NewAdvertForm() {
           style={{ display: 'none' }}
           accept="image/*"
           multiple
-          onChange={addImageTool}
+          onChange={addImageTool} // Используем функцию загрузки изображений
         />
         <Button
           type="button"
@@ -178,6 +162,7 @@ function NewAdvertForm() {
           onClick={() => document.getElementById('image-upload')?.click()}
         />
       </ButtonControl>
+
       <ButtonControl>
         <Button
           type="submit"

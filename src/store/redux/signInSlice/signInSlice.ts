@@ -1,5 +1,3 @@
-import {jwtDecode} from "jwt-decode"
-
 import { createAppSlice } from 'store/createAppSlice'
 
 import { LoginInitialState, LoginRequestDto, TokenPayLoad } from './types'
@@ -27,12 +25,12 @@ export const signInOutSlice = createAppSlice({
           const result = await response.json()
           if (!response.ok) {
             return rejectWithValue(
-              result.message || 'Incorrect password or email address',
+              result.message || 'Incorrect user password or email',
             )
           }
           return result
         } catch (error) {
-          return rejectWithValue('Incorrect password or email address')
+          return rejectWithValue('Network error or server is unavailable')
         }
       },
       {
@@ -42,10 +40,10 @@ export const signInOutSlice = createAppSlice({
           state.error = undefined
         },
         fulfilled: (state: LoginInitialState, action) => {
-          const decoded = jwtDecode<TokenPayLoad>(action.payload.accessToken)
+          // const decoded = jwtDecode<TokenPayLoad>(action.payload.accessToken)
           localStorage.setItem('accessToken', action.payload.accessToken)
           localStorage.setItem('refreshToken', action.payload.refreshToken)
-          localStorage.setItem("userId", decoded.sub.toString())
+          // localStorage.setItem("userId", decoded.sub.toString())
           state.isLoading = false
           state.isAuthenticated = true
           state.error = undefined
@@ -60,10 +58,49 @@ export const signInOutSlice = createAppSlice({
     logoutUser: create.reducer((state: LoginInitialState) => {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
-      localStorage.removeItem("userId")
+      localStorage.removeItem("userObj")
       state.isAuthenticated = false
       state.error = undefined
     }),
+    getUserById: create.asyncThunk(
+      async (userId: number, { rejectWithValue }) => {
+        try {
+          const accessToken = localStorage.getItem('accessToken');
+          if (!accessToken) throw new Error('Access token is missing');
+    
+          const response = await fetch(`/api/users/${userId}`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+    
+          const result = await response.json();
+          if (!response.ok) {
+            return rejectWithValue(result.message || 'Failed to fetch user data');
+          }
+    
+          return result;
+        } catch (error) {
+          return rejectWithValue('Network error or server is unavailable')
+        }
+      },
+      {
+        pending: (state: LoginInitialState) => {
+          state.isLoading = true;
+          state.error = undefined;
+        },
+        fulfilled: (state: LoginInitialState, action) => {
+          localStorage.setItem('userObj', JSON.stringify(action.payload));
+          state.isLoading = false;
+          state.error = undefined;
+        },
+        rejected: (state: LoginInitialState, action) => {
+          state.isLoading = false;
+          state.error = action.payload as string;
+        },
+      }
+    ),    
   }),
   selectors: {
     login_user: (state: LoginInitialState) => state,

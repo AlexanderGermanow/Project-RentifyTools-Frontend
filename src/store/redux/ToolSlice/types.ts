@@ -11,14 +11,15 @@ export interface ToolResponseDto {
   title: string
   description: string
   price: string
-  imageUrls: string[] 
+  imageUrls: string[]
   status: string
 }
 
 export interface ToolInitialState {
+  images: string[]
   tools: ToolResponseDto[]
   userTools: ToolResponseDto[]
-  toolObj: Partial<ToolResponseDto> | undefined
+  toolObj: ToolResponseDto | undefined
   initialTools: ToolResponseDto[]
   isLoading: boolean
   error: string | undefined
