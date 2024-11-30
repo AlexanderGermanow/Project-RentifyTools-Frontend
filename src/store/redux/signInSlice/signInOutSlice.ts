@@ -1,3 +1,4 @@
+
 import { createAppSlice } from 'store/createAppSlice'
 
 import { LoginInitialState, LoginRequestDto, TokenPayLoad } from './types'
@@ -43,7 +44,6 @@ export const signInOutSlice = createAppSlice({
           // const decoded = jwtDecode<TokenPayLoad>(action.payload.accessToken)
           localStorage.setItem('accessToken', action.payload.accessToken)
           localStorage.setItem('refreshToken', action.payload.refreshToken)
-          // localStorage.setItem("userId", decoded.sub.toString())
           state.isLoading = false
           state.isAuthenticated = true
           state.error = undefined
