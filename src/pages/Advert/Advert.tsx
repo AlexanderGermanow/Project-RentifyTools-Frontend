@@ -28,7 +28,7 @@ import ToolCard from 'components/ToolCard/ToolCard'
 function Advert() {
   const [userData, setUserData] = useState<ToolProps | null>(null)
   const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams()
 
   const { toolObj, isLoading, error } = useAppSelector(
     toolSliceSelectors.toolObj_data,
@@ -36,10 +36,8 @@ function Advert() {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    if (id) {
-      dispatch(toolSliceAction.fetchTool(id))
-    }
-  }, [id, dispatch])
+    dispatch(toolSliceAction.fetchTool())
+  }, [])
 
   const nextImage = () => {}
 
@@ -70,13 +68,9 @@ function Advert() {
           <DescriptionFrame>
             <ToolInfo>
               <ToolCard
-                // toolId={toolObj.id}
                 title={toolObj.title}
                 price={toolObj.price}
                 description={toolObj.description}
-                // imageUrl={toolObj.imageUrl}
-                onAddToCard={() => console.log('Add to cart')}
-                onAddToFavourites={() => console.log('Add to favourites')}
               />
             </ToolInfo>
             <UserInfo>
