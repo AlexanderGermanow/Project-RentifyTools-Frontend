@@ -1,20 +1,13 @@
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { Button, TextField, Box } from '@mui/material'
 import { colors } from 'styles/colors'
 import { toolSliceAction } from 'store/redux/ToolSlice/toolSlice'
 import { TOOLS_APP_ROUTES } from 'constants/routes'
-
-interface SearchProps {
-  toolName: string
-  onChangeValue: (event: ChangeEvent<HTMLInputElement>) => void
-  onSearch: () => void
-}
+import { SearchProps } from './types'
 
 function Search({ toolName, onChangeValue }: SearchProps) {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
@@ -25,14 +18,7 @@ function Search({ toolName, onChangeValue }: SearchProps) {
         state: { searchTerm: toolName },
       })
       onChangeValue({ target: { value: '' } } as ChangeEvent<HTMLInputElement>)
-    if (toolName.trim() !== '') {
-      dispatch(toolSliceAction.searchTools(toolName))
-      navigate(TOOLS_APP_ROUTES.SEARCH_RESULTS, {
-        state: { searchTerm: toolName },
-      })
-      onChangeValue({ target: { value: '' } } as ChangeEvent<HTMLInputElement>)
     }
-  }
   }
 
   return (
@@ -40,12 +26,14 @@ function Search({ toolName, onChangeValue }: SearchProps) {
       sx={{
         display: 'flex',
         alignItems: 'center',
-        display: 'flex',
-        alignItems: 'center',
         backgroundColor: colors.WHITE,
         borderRadius: 2,
-        width: 550,
+        width: '100%',
+        maxWidth: 550,
         height: 50,
+        '@media (max-width: 600px)': {
+          height: 40,
+        },
       }}
     >
       <TextField
@@ -57,20 +45,33 @@ function Search({ toolName, onChangeValue }: SearchProps) {
           disableUnderline: true,
           style: {
             color: colors.BLACK,
-            height: 50,
-            paddingLeft: '10px',
+            height: '100%',
             paddingLeft: '10px',
           },
         }}
-        sx={{ flex: 1 }}
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          borderTopLeftRadius: 8,
+          borderBottomLeftRadius: 8,
+          '& .MuiInputBase-root': {
+            height: '100%',
+          },
+          '@media (max-width: 600px)': {
+            fontSize: '0.875rem',
+          },
+        }}
       />
       <Button
         sx={{
           backgroundColor: colors.BUTTON,
           height: '100%',
           borderRadius: '0 8px 8px 0',
-          height: '100%',
-          borderRadius: '0 8px 8px 0',
+          padding: '0 16px',
+          '@media (max-width: 600px)': {
+            padding: '0 8px',
+            fontSize: '0.875rem',
+          },
         }}
         variant="contained"
         onClick={onSearch}
@@ -79,8 +80,6 @@ function Search({ toolName, onChangeValue }: SearchProps) {
       </Button>
     </Box>
   )
-  )
 }
 
-export default Search
 export default Search
