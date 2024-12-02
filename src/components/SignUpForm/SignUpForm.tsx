@@ -1,17 +1,20 @@
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
+import { SnackbarProvider, useSnackbar } from 'notistack'
 
 import { useAppDispatch, useAppSelector } from 'store/hooks'
+import { useNavigate } from 'react-router-dom'
+
 import {
   userSliceAction,
   userSliceSelectors,
 } from 'store/redux/userSlice/userSlice'
+import { TOOLS_APP_ROUTES } from 'constants/routes'
 
 import Input from 'components/Input/Input'
 import Button from 'components/Button/Button'
 
-import { SignUpFormProps } from './types'
-import { SIGNUP_FORM_NAMES } from './types'
+import { SIGNUP_FORM_NAMES, SignUpFormProps } from './types'
 import {
   SignUpFormContainer,
   Title,
@@ -19,7 +22,6 @@ import {
   TitleContainer,
   InputsContainer,
   ButtonControl,
-  ErrorContainer,
 } from './styles'
 
 function SignUpForm({
@@ -27,11 +29,9 @@ function SignUpForm({
   onRegistrationSuccess,
 }: SignUpFormProps) {
   const dispatch = useAppDispatch()
-
-  const { userObj, error, isLoading } = useAppSelector(
-    userSliceSelectors.user_data,
-  )
-
+  const { error,isLoading } = useAppSelector(userSliceSelectors.user_data)
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
   const validationSchema = Yup.object().shape({
     [SIGNUP_FORM_NAMES.FIRST_NAME]: Yup.string()
       .required('First name is required')
@@ -44,12 +44,13 @@ function SignUpForm({
 
     [SIGNUP_FORM_NAMES.PHONE]: Yup.string()
       .required('Phone number is required')
+      .min(10, 'At least 10 characters long')
+      .max(15, 'Up to 15 characters')
       .matches(
         /^\+?[1-9]\d{1,14}$/,
         'Use international format, e.g., +1234567890',
-      )
-      .max(15, 'Up to 15 characters'),
-
+      ),
+      
     [SIGNUP_FORM_NAMES.EMAIL]: Yup.string()
       .required('Email is required')
       .min(5, 'At least 5 characters')
@@ -90,95 +91,100 @@ function SignUpForm({
       dispatch(userSliceAction.createUser(userData))
         .unwrap()
         .then(() => {
-          helpers.resetForm()
-          onRegistrationSuccess()
+          enqueueSnackbar('Registration successful! Please log in.', {
+            variant: 'success',
+          })
+          setTimeout(() => {
+            onRegistrationSuccess()
+            helpers.resetForm()
+          }, 2000)
+          navigate(TOOLS_APP_ROUTES.LOGIN)
         })
-        .catch(() => {
-          console.error('Registration failed')
+        .catch((error) => {
+          enqueueSnackbar(error, { variant: 'error' })
+          helpers.resetForm()
         })
     },
   })
 
   return (
-    <SignUpFormContainer onSubmit={formik.handleSubmit}>
-      <TitleContainer>
-        <Title $isActive={false} onClick={onSwitchToSignIn}>
-          Sign In
-        </Title>
-        <Title $isActive>Sign Up</Title>
-      </TitleContainer>
-      <InputsContainer>
-        <Input
-          id="signupform-name"
-          label="First name:"
-          name={SIGNUP_FORM_NAMES.FIRST_NAME}
-          type="text"
-          value={formik.values.firstname}
-          onChange={formik.handleChange}
-          error={formik.errors.firstname}
-        />
-        <Input
-          id="signupform-surname"
-          label="Last name:"
-          name={SIGNUP_FORM_NAMES.LAST_NAME}
-          type="text"
-          value={formik.values.lastname}
-          onChange={formik.handleChange}
-          error={formik.errors.lastname}
-        />
-        <Input
-          id="signupform-phone"
-          label="Phone:"
-          name={SIGNUP_FORM_NAMES.PHONE}
-          type="tel"
-          value={formik.values.phone}
-          onChange={formik.handleChange}
-          error={formik.errors.phone}
-        />
-        <Input
-          id="signupform-email"
-          label="Email:"
-          name={SIGNUP_FORM_NAMES.EMAIL}
-          type="email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          error={formik.errors.email}
-        />
-        <Input
-          id="signupform-password"
-          label="Password:"
-          name={SIGNUP_FORM_NAMES.PASSWORD}
-          type="password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          error={formik.errors.password}
-        />
-        <Input
-          id="signupform-repeat_password"
-          label="Repeat password:"
-          name={SIGNUP_FORM_NAMES.REPEAT_PASSWORD}
-          type="password"
-          value={formik.values.repeatPassword}
-          onChange={formik.handleChange}
-          error={formik.errors.repeatPassword}
-        />
-      </InputsContainer>
-      <ButtonControl>
-        <Button
-          type="submit"
-          name={isLoading ? 'Signing Up...' : 'Sign Up'}
-          disabled={isLoading}
-        />
-      </ButtonControl>
-      {error ? (
-        <ErrorContainer>{error}</ErrorContainer>
-      ) : (
+    <SnackbarProvider maxSnack={3}>
+      <SignUpFormContainer onSubmit={formik.handleSubmit} noValidate>
+        <TitleContainer>
+          <Title $isActive={false} onClick={onSwitchToSignIn}>
+            Sign In
+          </Title>
+          <Title $isActive>Sign Up</Title>
+        </TitleContainer>
+        <InputsContainer>
+          <Input
+            id="signupform-name"
+            label="First name:"
+            name={SIGNUP_FORM_NAMES.FIRST_NAME}
+            type="text"
+            value={formik.values.firstname}
+            onChange={formik.handleChange}
+            error={formik.errors.firstname}
+          />
+          <Input
+            id="signupform-surname"
+            label="Last name:"
+            name={SIGNUP_FORM_NAMES.LAST_NAME}
+            type="text"
+            value={formik.values.lastname}
+            onChange={formik.handleChange}
+            error={formik.errors.lastname}
+          />
+          <Input
+            id="signupform-phone"
+            label="Phone:"
+            name={SIGNUP_FORM_NAMES.PHONE}
+            type="tel"
+            value={formik.values.phone}
+            onChange={formik.handleChange}
+            error={formik.errors.phone}
+          />
+          <Input
+            id="signupform-email"
+            label="Email:"
+            name={SIGNUP_FORM_NAMES.EMAIL}
+            type="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            error={formik.errors.email}
+          />
+          <Input
+            id="signupform-password"
+            label="Password:"
+            name={SIGNUP_FORM_NAMES.PASSWORD}
+            type="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            error={formik.errors.password}
+          />
+          <Input
+            id="signupform-repeat_password"
+            label="Repeat password:"
+            name={SIGNUP_FORM_NAMES.REPEAT_PASSWORD}
+            type="password"
+            value={formik.values.repeatPassword}
+            onChange={formik.handleChange}
+            error={formik.errors.repeatPassword}
+          />
+        </InputsContainer>
+        <ButtonControl>
+          <Button
+            type="submit"
+            name={isLoading ? 'Signing Up...' : 'Sign Up'}
+            disabled={isLoading}
+          />
+        </ButtonControl>
         <Text>
           By signing up, you accept our Terms and Conditions and acknowledge our
           Privacy Policy
         </Text>
-      )}
-    </SignUpFormContainer>
+      </SignUpFormContainer>
+    </SnackbarProvider>
   )
 }
 export default SignUpForm
